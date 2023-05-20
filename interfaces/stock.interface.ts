@@ -1,4 +1,4 @@
-export interface StockSearchKeywordResult {
+export interface KeywordsSearchResult {
 	symbol: string;
 	name: string;
 	type: string;
@@ -10,6 +10,6 @@ export interface StockSearchKeywordResult {
 	matchScore: string;
 }
 
-export interface StockSearchKeyword {
-	bestMatches: StockSearchKeywordResult[];
+export interface KeywordsSearch {
+	bestMatches: KeywordsSearchResult[];
 }
