@@ -4,65 +4,69 @@ import {
 	keywordsSearch,
 	retriveStock,
 	retriveStockQuote,
-} from "../controllers/stock.controller";
-import {
-	errorResponseHandler,
-	apiLimitExceededHandler,
-} from "../middlewares/error-handling.middleware";
+} from "../controllers/helpers/apiHelper";
+import { errorResponseHandler } from "../controllers/helpers/errorHandlingHelper";
+import { stockRatingYear } from "../controllers/stock.controller";
 
-export const stockRoutes = {
-	async listStocksFromKeywords(app: Application): Promise<void> {
-		app.get("/stock/search", async (req: Request, res: Response) => {
-			try {
-				const keywords = req.query.keywords as string | undefined;
-				if (keywords === undefined) {
-					throw new Error("keyword missing");
-				}
-				const data = await keywordsSearch(keywords);
-				apiLimitExceededHandler(data);
-				return res.json({
-					status: "Success",
-					result: data,
-				});
-			} catch (error) {
-				return errorResponseHandler(res, error);
+export async function stockRoutes(app: Application): Promise<void> {
+	app.get("/stock/search", async (req: Request, res: Response) => {
+		try {
+			const keywords = req.query.keywords as string | undefined;
+			if (keywords === undefined) {
+				throw new Error("keyword missing");
 			}
-		});
-	},
-	async getStock(app: Application): Promise<void> {
-		app.get("/stock/get", async (req: Request, res: Response) => {
-			try {
-				const symbol = req.query.symbol as string | undefined;
-				if (symbol === undefined) {
-					throw new Error("symbol missing");
-				}
-				const data = await retriveStock(symbol);
-				apiLimitExceededHandler(data);
-				return res.json({
-					status: "Success",
-					result: data,
-				});
-			} catch (error) {
-				return errorResponseHandler(res, error);
+			const data = await keywordsSearch(keywords);
+			return res.json({
+				status: "Success",
+				result: data,
+			});
+		} catch (error) {
+			return errorResponseHandler(res, error);
+		}
+	});
+	app.get("/stock/get", async (req: Request, res: Response) => {
+		try {
+			const symbol = req.query.symbol as string | undefined;
+			if (symbol === undefined) {
+				throw new Error("symbol missing");
 			}
-		});
-	},
-	async getStockQuote(app: Application): Promise<void> {
-		app.get("/stock/quote", async (req: Request, res: Response) => {
-			try {
-				const symbol = req.query.symbol as string | undefined;
-				if (symbol === undefined) {
-					throw new Error("symbol missing");
-				}
-				const data = await retriveStockQuote(symbol);
-				apiLimitExceededHandler(data);
-				return res.json({
-					status: "Success",
-					result: data,
-				});
-			} catch (error) {
-				return errorResponseHandler(res, error);
+			const data = await retriveStock(symbol);
+			return res.json({
+				status: "Success",
+				result: data,
+			});
+		} catch (error) {
+			return errorResponseHandler(res, error);
+		}
+	});
+	app.get("/stock/quote", async (req: Request, res: Response) => {
+		try {
+			const symbol = req.query.symbol as string | undefined;
+			if (symbol === undefined) {
+				throw new Error("symbol missing");
 			}
-		});
-	},
-};
+			const data = await retriveStockQuote(symbol);
+			return res.json({
+				status: "Success",
+				result: data,
+			});
+		} catch (error) {
+			return errorResponseHandler(res, error);
+		}
+	});
+	app.get("/stock/rating", async (req: Request, res: Response) => {
+		try {
+			const symbol = req.query.symbol as string | undefined;
+			if (symbol === undefined) {
+				throw new Error("symbol missing");
+			}
+			const data = await stockRatingYear(symbol);
+			return res.json({
+				status: "Success",
+				result: data,
+			});
+		} catch (error) {
+			return errorResponseHandler(res, error);
+		}
+	});
+}

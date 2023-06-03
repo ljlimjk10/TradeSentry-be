@@ -1,63 +1,18 @@
-import axios from "axios";
-import * as dotenv from "dotenv";
-dotenv.config();
+import { retriveStockQuote, retriveStockEarnings } from "./helpers/apiHelper";
 
-import { KeywordsSearch } from "../interfaces/stock.interface";
+/**
+ * Method to compute the rating of stock based on financial year
+ * @param
+ */
+export async function stockRatingYear(symbol: string) {
+	const stockQuote = retriveStockQuote(symbol);
+	const stockEarnings = retriveStockEarnings(symbol);
+	const quoteResponse = await stockQuote;
+	const earningsReponse = await stockEarnings;
 
-const BASE_URL = "https://www.alphavantage.co";
-
-const baseApi = axios.create({
-	baseURL: BASE_URL,
-	headers: {
-		"Content-Type": "application/json",
-	},
-});
-
-export async function keywordsSearch(
-	keywords: string
-): Promise<KeywordsSearch> {
-	try {
-		const params = {
-			function: "SYMBOL_SEARCH",
-			keywords: keywords,
-			apikey: process.env.ALPHAVANTAGE_ACCESS_KEY,
-		};
-		const response = await baseApi.get("/query", {
-			params,
-		});
-		const { data, status } = response;
-		return data;
-	} catch (error) {
-		throw error;
-	}
-}
-
-export async function retriveStock(symbol: string) {
-	try {
-		const params = {
-			function: "TIME_SERIES_DAILY_ADJUSTED",
-			symbol: symbol,
-			apikey: process.env.ALPHAVANTAGE_ACCESS_KEY,
-		};
-		const response = await baseApi.get("/query", { params });
-		const { data, status } = response;
-		return data;
-	} catch (error) {
-		throw error;
-	}
-}
-
-export async function retriveStockQuote(symbol: string) {
-	try {
-		const params = {
-			function: "GLOBAL_QUOTE",
-			symbol: symbol,
-			apikey: process.env.ALPHAVANTAGE_ACCESS_KEY,
-		};
-		const response = await baseApi.get("/query", { params });
-		const { data, status } = response;
-		return data;
-	} catch (error) {
-		throw error;
-	}
+	const stockPrice: number = +quoteResponse["Global Quote"]["05. price"];
+	const reportedEarnings: number =
+		+earningsReponse["annualEarnings"][0]["reportedEPS"];
+	const priceEarningsRatio = stockPrice / reportedEarnings;
+	return priceEarningsRatio;
 }
