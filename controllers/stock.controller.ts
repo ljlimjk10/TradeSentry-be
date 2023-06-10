@@ -1,32 +1,61 @@
-import axios from "axios";
-import * as dotenv from "dotenv";
-dotenv.config();
+import { retriveStockEarnings, retrieveAllPrices } from "./helpers/apiHelper";
 
-import { StockSearchKeyword } from "../interfaces/stock.interface";
+/**
+ * Method to compute the rating of stock using P/E ratio
+ * @param
+ */
 
-const BASE_URL = "https://www.alphavantage.co";
+// TODO: Refactor to allow computation based on specified time periods
+export async function stockRatingYear(symbol: string) {
+	const stockPrices = await retrieveAllPrices(symbol);
+	const stockEarnings = await retriveStockEarnings(symbol);
+	const allAnnualEarnings = stockEarnings["annualEarnings"];
 
-const baseApi = axios.create({
-	baseURL: BASE_URL,
-	headers: {
-		"Content-Type": "application/json",
-	},
-});
+	const [{ fiscalDateEnding, reportedEPS }, ...previousAnnualEarnings] =
+		allAnnualEarnings;
+	const latestPriceEarningsRatio =
+		+stockPrices["Time Series (Daily)"][fiscalDateEnding]["4. close"] /
+		+reportedEPS;
+	let sumPriceEarningsRatio = 0;
+	let count = 0;
 
-export async function keywordSearch(keywords: string) {
-	try {
-		const params = {
-			function: "SYMBOL_SEARCH",
-			keywords: keywords,
-			apikey: process.env.ALPHAVANTAGE_ACCESS_KEY,
-		};
-		const response = await baseApi.get<StockSearchKeyword>("/query", {
-			params,
+	for (const { fiscalDateEnding, reportedEPS } of previousAnnualEarnings) {
+		const [year, month] = fiscalDateEnding.split("-");
+
+		// Find the first date in stockPrices that matches the month and year
+		const matchingDate = Object.keys(
+			stockPrices["Time Series (Daily)"]
+		).find((date) => {
+			const [dateYear, dateMonth] = date.split("-");
+			return dateYear === year && dateMonth === month;
 		});
-		const { data, status } = response;
-		return data;
-	} catch (error) {
-		console.log(error);
-		throw error;
+
+		if (matchingDate) {
+			const priceEarningRatio =
+				+stockPrices["Time Series (Daily)"][matchingDate]["4. close"] /
+				+reportedEPS;
+			sumPriceEarningsRatio += priceEarningRatio;
+			count += 1;
+		}
+	}
+
+	const avgPriceEarningsRatio = sumPriceEarningsRatio / count;
+
+	const diffInRatio = latestPriceEarningsRatio - avgPriceEarningsRatio;
+	if (diffInRatio > 0) {
+		return {
+			valuation: "Undervalued",
+			diffInRatio: diffInRatio,
+		};
+	} else if (diffInRatio < 0) {
+		return {
+			valuation: "Overvalued",
+			diffInRatio: diffInRatio,
+		};
+	} else {
+		return {
+			valuation: "Fairly Valued",
+			diffInRatio: diffInRatio,
+		};
 	}
 }
