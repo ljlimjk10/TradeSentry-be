@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "eslint . --ext .ts  && rimraf ./dist && npx tsc --target es2015",
-		"start": "node ./dist/index.js"
+		"start": "node ./dist/index.js",
+		"auto": "eslint . --ext .ts  && rimraf ./dist && npx tsc --target es2015 && node ./dist/index.js"
 	},
 	"repository": {
 		"type": "git",

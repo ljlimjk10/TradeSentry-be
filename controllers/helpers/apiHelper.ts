@@ -6,6 +6,7 @@ import {
 	KeywordsSearch,
 	StockQuote,
 	StockEarnings,
+	StockPricesResult,
 } from "../../interfaces/apiService.typings";
 
 import { apiLimitExceededHandler } from "../../controllers/helpers/errorHandlingHelper";
@@ -69,6 +70,23 @@ export async function retriveStockQuote(symbol: string) {
 		apikey: API_KEY,
 	};
 	const response = await baseApi.get<StockQuote>("/query", { params });
+	apiLimitExceededHandler(response.data);
+	const { data, status } = response;
+	return data;
+}
+
+/**
+ * Method for getting all stock's prices using stock's symbol
+ * @param symbol
+ */
+export async function retrieveAllPrices(symbol: string) {
+	const params = {
+		function: "TIME_SERIES_DAILY_ADJUSTED",
+		symbol: symbol,
+		outputsize: "full",
+		apikey: API_KEY,
+	};
+	const response = await baseApi.get<StockPricesResult>("/query", { params });
 	apiLimitExceededHandler(response.data);
 	const { data, status } = response;
 	return data;
